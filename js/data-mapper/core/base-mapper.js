@@ -148,6 +148,37 @@
     return list.length ? list[0].url : '';
   };
 
+  // 객실 평면도 소스.
+  // 크롤러가 원본 객실 상세의 평면도 영역에서 이미지를 찾았을 때만 이 필드/카테고리를 채운다.
+  // ⚠️ 제목·설명 자리가 없다. 도면 이미지 한 장이 전부다.
+  BaseDataMapper.prototype.getRoomFloorplanImages = function (roomtype) {
+    if (!roomtype) return [];
+
+    var direct =
+      roomtype.floorplanImages ||
+      roomtype.floorplans ||
+      (roomtype.floorplan && roomtype.floorplan.images) ||
+      [];
+    if (direct && !Array.isArray(direct)) direct = [direct];
+
+    if (direct.length) {
+      var selectedDirect = this.getSelectedImages(direct);
+      return selectedDirect.length ? selectedDirect : direct;
+    }
+
+    var images = roomtype.images || [];
+    var filtered = images.filter(function (img) {
+      return /^(roomtype_)?floorplan$|^room_floorplan$|^floor_plan$/i.test(img.category || '');
+    });
+    var selected = this.getSelectedImages(filtered);
+    return selected.length ? selected : filtered.slice();
+  };
+
+  BaseDataMapper.prototype.getRoomFloorplanImage = function (roomtype) {
+    var images = this.getRoomFloorplanImages(roomtype);
+    return images.length ? images[0] : null;
+  };
+
   // 데이터 변환 (스네이크 케이스 → 카멜 케이스)
   BaseDataMapper.prototype.convertToCamelCase = function (obj) {
     if (Array.isArray(obj)) {
@@ -192,11 +223,12 @@
 
   // ── SEO 메타태그 업데이트 ──────────────────────────────────────
   BaseDataMapper.prototype.getRoomGroupName = function (roomtype) {
-    return String((roomtype && (roomtype.groupname || roomtype.groupName || roomtype.group_name)) || '').trim();
+    return String((roomtype && roomtype.groupName) || '').trim();
   };
 
   BaseDataMapper.prototype.hasRoomGroups = function (roomtypes) {
-    return (roomtypes || []).some(function (rt) { return !!String((rt && (rt.groupname || rt.groupName || rt.group_name)) || '').trim(); });
+    var self = this;
+    return (roomtypes || []).some(function (rt) { return !!self.getRoomGroupName(rt); });
   };
 
   BaseDataMapper.prototype.getRoomMenuItems = function (roomtypes, resolveName) {
