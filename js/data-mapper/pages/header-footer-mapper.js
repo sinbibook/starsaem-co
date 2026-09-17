@@ -2,6 +2,28 @@
   'use strict';
 
   var YBS_BASE_URL = 'https://www.yapen.co.kr/external?ypIdx=';
+
+  // 상담하기 — 뒤에 property.tripPropertyId 가 붙는다
+  var CONSULT_BASE_URL = 'https://www.bookingplay.co.kr/api/cti_eicn/kakao_happy_talk?tid=';
+
+  // 파트너 타입 — 원천은 백오피스 DB `public.contract_info.partner_type` 이고
+  // BFF 가 코드 문자열을 그대로 내려준다. **분기는 템플릿이 한다**(PC/모바일은 템플릿만 안다).
+  //
+  //   distributor_a  총판A     PC 상담하기 / 모바일 상담하기 + 예약하기
+  //   distributor_b  총판B     PC 없음     / 모바일 예약하기
+  //   sales_agency   판매대행  PC 없음     / 모바일 예약하기
+  //
+  // ⚠️ 예약하기는 **파트너 타입과 무관**하다 — 세 타입 모두 모바일에서만 뜬다.
+  //    그건 기존 `.ft_btn_reserve.for_m` 의 미디어쿼리가 이미 하고 있어 손대지 않는다.
+  //    타입으로 갈리는 것은 상담하기 하나뿐이다.
+  var CONSULT_PARTNER_TYPES = ['distributor_a'];
+
+  // ⚠️ base-mapper 에 `cleanText` 가 없는 템플릿이 있어 의존하지 않는다.
+  function consultText(v) {
+    return v === undefined || v === null ? '' : String(v).trim();
+  }
+
+
   // 로고 색상 보정을 적용할 최소 투명 픽셀 비율 (미만이면 사각 배경 로고로 보고 원본 유지)
   var LOGO_MIN_TRANSPARENT_RATIO = 0.15;
 
@@ -16,6 +38,7 @@
     this.mapFavicon();
     this.mapBookingLinks();
     this.mapYbs();
+    this.mapConsult();
     this.mapRoomMenu();
     this.mapFacilityMenu();
     this.mapPageToggles();
@@ -157,6 +180,47 @@
       var target = el.tagName === 'A' ? el : el.querySelector('a');
       if (target) {
         target.href = YBS_BASE_URL + ybsId;
+        target.setAttribute('target', '_blank');
+      }
+    });
+  };
+
+  // 상담 URL 에 쓸 tripPropertyId. 없거나 형식이 아니면 빈 문자열.
+  HeaderFooterMapper.prototype.getConsultId = function () {
+    var raw = consultText(this.getProperty().tripPropertyId);
+    // ⚠️ URL 쿼리에 그대로 붙는 값이라 토큰 형태만 통과시킨다. 플레이스홀더
+    //    문자열(`숙소 ID` 같은 한글·공백)이 들어와도 링크가 깨지지 않는다.
+    return /^[A-Za-z0-9_-]+$/.test(raw) ? raw : '';
+  };
+
+  // 상담하기 노출 대상인가 — 파트너 타입 + tripPropertyId 둘 다 있어야 한다.
+  HeaderFooterMapper.prototype.isConsultVisible = function () {
+    var partnerType = consultText(this.getProperty().partnerType);
+    return Boolean(this.getConsultId()) && CONSULT_PARTNER_TYPES.indexOf(partnerType) !== -1;
+  };
+
+  // MAPPER: property.tripPropertyId + partnerType → [data-consult-button] (우측 하단 상담하기)
+  //
+  // 총판A 만 노출하고, `tripPropertyId` 가 비면 타입과 무관하게 숨긴다.
+  // 값이 없으면 `[data-consult-wrap]` 째 숨긴다 — 버튼만 숨기면 빈 박스가 남는다.
+  HeaderFooterMapper.prototype.mapConsult = function () {
+    var tripPropertyId = this.getConsultId();
+    var visible = this.isConsultVisible();
+
+    // 상담하기가 빠지면 예약하기 아래가 비어 버린다.
+    // CSS 가 위치를 되돌릴 수 있도록 상태를 루트에 찍는다.
+    document.documentElement.setAttribute('data-consult', visible ? 'on' : 'off');
+
+    document.querySelectorAll('[data-consult-button]').forEach(function (el) {
+      var host = el.closest('[data-consult-wrap]') || el;
+      if (!visible) {
+        host.style.display = 'none';
+        return;
+      }
+      host.style.display = '';
+      var target = el.tagName === 'A' ? el : el.querySelector('a');
+      if (target) {
+        target.href = CONSULT_BASE_URL + tripPropertyId;
         target.setAttribute('target', '_blank');
       }
     });

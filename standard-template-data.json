@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "version": "1.0.0",
-    "generatedAt": "2026-09-10T08:24:26.788307267Z",
+    "version": "1.1.0",
+    "generatedAt": "2026-09-17T00:44:10.213834246Z",
     "templateType": "trip_d",
     "propertyId": "cbdab800-f036-4b98-b8aa-352caddd855a",
     "homepageId": "83f139dc-d378-41f5-9a5a-8f3eefeeb105"
@@ -29,6 +29,8 @@
     "domain": "starsaem.co.kr",
     "realtimeBookingId": "https://www.bookingplay.co.kr/booking/1/10454",
     "ybsId": "58552",
+    "tripPropertyId": "10454",
+    "partnerType": "distributor_b",
     "amenities": [
       "흡연구역(지정장소)",
       "주차장"

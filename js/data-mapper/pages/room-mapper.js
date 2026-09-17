@@ -41,6 +41,7 @@
     this.mapIntro();
     this.mapTable();
     this.mapGallery();
+    this.mapFloorplan();
     this.mapRoomSlides();
     this.refreshSwipers();
   };
@@ -326,6 +327,35 @@
       a.appendChild(txt);
       slide.appendChild(a);
       wrapper.appendChild(slide);
+    });
+  };
+
+  /* MAPPER: roomtypes[current] 평면도 이미지 → [data-room-floorplan-image]
+     ⚠️ 제목·설명 자리가 없다. 도면 이미지 한 장이 전부다.
+     ⚠️ 이미지가 없으면 [data-room-floorplan-section] 을 통째로 숨긴다 —
+        원본에 없던 빈 구간을 남기지 않는다.
+        (layout-map 의 배치도는 반대로 없어도 placeholder 를 세운다 — 규칙이 정반대다.)
+     ⚠️ URL 이 있는데 로드가 죽어도 구간째 숨긴다 — 깨진 아이콘만 남는 것보다 낫다. */
+  RoomMapper.prototype.mapFloorplan = function () {
+    var sections = document.querySelectorAll('[data-room-floorplan-section]');
+    if (!sections.length) return;
+
+    var image = this.getRoomFloorplanImage(this.getCurrentRoomtype());
+    var url = (image && image.url) || '';
+
+    sections.forEach(function (el) {
+      el.style.display = url ? '' : 'none';
+    });
+    if (!url) return;
+
+    document.querySelectorAll('[data-room-floorplan-image]').forEach(function (img) {
+      img.alt = '객실 평면도';
+      img.onerror = function () {
+        sections.forEach(function (el) {
+          el.style.display = 'none';
+        });
+      };
+      img.src = url;
     });
   };
 
