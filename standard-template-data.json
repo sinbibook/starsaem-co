@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "version": "1.2.0",
-    "generatedAt": "2026-09-17T00:45:07.951548806Z",
+    "version": "1.3.0",
+    "generatedAt": "2026-10-09T07:50:22.202540820Z",
     "templateType": "trip_d",
     "propertyId": "cbdab800-f036-4b98-b8aa-352caddd855a",
     "homepageId": "83f139dc-d378-41f5-9a5a-8f3eefeeb105"
@@ -337,7 +337,8 @@
         "surrounding": [ ],
         "commonArea": [ ]
       }
-    ]
+    ],
+    "tripProviderName": "트립일레븐"
   },
   "rooms": [
     {
@@ -999,8 +1000,8 @@
                 "title": "",
                 "images": [
                   {
-                    "id": "d42cd6ca-5459-47b6-85f3-9cf40a8196a0",
-                    "url": "https://starsaem.co.kr/assets/images/rooms/layout.webp",
+                    "id": "01a11fa4-3f24-716c-9417-410a3384bfd1",
+                    "url": "https://jlnjajtcnyqupfaqjerz.supabase.co/storage/v1/object/public/app-images/homepage/83f139dc-d378-41f5-9a5a-8f3eefeeb105/layout_map_about/1791532217730-6mt2evlf9r.jpg",
                     "sortOrder": 0,
                     "description": "",
                     "isSelected": true,
@@ -1012,6 +1013,9 @@
               "enabled": true
             }
           ]
+        },
+        "landing": {
+          "sections": [ ]
         }
       },
       "popup": {
