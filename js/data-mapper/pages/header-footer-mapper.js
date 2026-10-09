@@ -39,6 +39,7 @@
     this.mapBookingLinks();
     this.mapYbs();
     this.mapConsult();
+    this.mapSocialLinks();
     this.mapRoomMenu();
     this.mapFacilityMenu();
     this.mapPageToggles();
@@ -185,6 +186,46 @@
     });
   };
 
+  // MAPPER: homepage.socialLinks.{facebook|instagram|blog|youtube} → [data-homepage-socialLinks-{platform}]
+  //
+  // 값이 있으면 href(+ target=_blank rel=noopener) + 노출, 없으면(null·빈 문자열·공백·키 없음) 숨긴다.
+  // 헤더 네이버 버튼은 blog 값(어드민 blog 칸에 네이버 플레이스/블로그 주소), 인스타그램 버튼은 instagram 값.
+  // facebook / youtube 는 D형 헤더에 마크업이 없어 매칭 요소가 0개다.
+  // 마크업은 매핑 전 깜빡임이 없도록 style="display: none" 으로 시작한다.
+  // 버튼을 감싼 [data-social-wrap] 은 안에 보이는 버튼이 하나도 없으면 래퍼째 숨긴다(빈 칸 방지).
+  // 헤더에 버튼이 하나라도 보이면 루트에 data-social="on" — 스크롤 헤더 메뉴 여백을 줄이는 CSS 기준
+  // (:has 대신 — 일부 브라우저에서 스타일 미반영).
+  HeaderFooterMapper.prototype.mapSocialLinks = function () {
+    var socialLinks = this.getHomepage().socialLinks || {};
+    var headerOn = false;
+    ['facebook', 'instagram', 'blog', 'youtube'].forEach(function (platform) {
+      var raw = socialLinks[platform];
+      var url = raw === undefined || raw === null ? '' : String(raw).trim();
+      document.querySelectorAll('[data-homepage-socialLinks-' + platform + ']').forEach(function (el) {
+        if (!url) {
+          el.style.display = 'none';
+          el.setAttribute('href', '#!');
+          return;
+        }
+        el.setAttribute('href', url);
+        el.setAttribute('target', '_blank');
+        el.setAttribute('rel', 'noopener');
+        el.style.display = '';
+        if (el.closest('.header')) headerOn = true;
+      });
+    });
+    document.querySelectorAll('[data-social-wrap]').forEach(function (wrap) {
+      var visible = Array.prototype.some.call(
+        wrap.querySelectorAll('[data-homepage-socialLinks-blog], [data-homepage-socialLinks-instagram]'),
+        function (el) {
+          return el.style.display !== 'none';
+        }
+      );
+      wrap.style.display = visible ? '' : 'none';
+    });
+    document.documentElement.setAttribute('data-social', headerOn ? 'on' : 'off');
+  };
+
   // 상담 URL 에 쓸 tripPropertyId. 없거나 형식이 아니면 빈 문자열.
   HeaderFooterMapper.prototype.getConsultId = function () {
     var raw = consultText(this.getProperty().tripPropertyId);
@@ -307,7 +348,20 @@
   };
 
   // MAPPER: property.contactPhone / property.businessInfo → footer 라인별 텍스트
+  // MAPPER: property.tripProviderName → [data-copyright]
+  // 공급사명이 있으면 data-copyright 의 템플릿 문자열에서 {provider} 를 치환한다.
+  // 값이 없으면(백오피스 미입력 → "") HTML 의 기존 트립일레븐 문구를 그대로 둔다.
+  HeaderFooterMapper.prototype.mapCopyright = function () {
+    var provider = String(this.getProperty().tripProviderName || '').trim();
+    if (!provider) return;
+    document.querySelectorAll('[data-copyright]').forEach(function (el) {
+      var tpl = el.getAttribute('data-copyright') || '';
+      el.textContent = tpl.replace(/\{provider\}/g, provider);
+    });
+  };
+
   HeaderFooterMapper.prototype.mapFooter = function () {
+    this.mapCopyright();
     var prop = this.getProperty();
     var biz = prop.businessInfo || {};
     var phones = this.toPhoneList(prop.contactPhone);
